@@ -1,0 +1,31 @@
+{
+  "name": "nicked-ext",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "lint": "prettier --ignore-path .gitignore  --check --plugin-search-dir=. . && eslint --ignore-path .gitignore .",
+    "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. .",
+    "dev": "webpack --mode=development --progress --watch --config config/webpack.config.js",
+    "build": "webpack --mode=production --config config/webpack.config.js"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.246",
+    "@types/node": "^20.8.4",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^8.51.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "file-loader": "^6.2.0",
+    "prettier": "^3.0.3",
+    "tailwindcss": "^3.3.3",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.0.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-merge": "^5.9.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
+}
