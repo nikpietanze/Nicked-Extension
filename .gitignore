@@ -1,4 +1,5 @@
 .env
+config/config.ts
 
 # Logs
 logs

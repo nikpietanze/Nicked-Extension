@@ -32,7 +32,7 @@ function watchForBuyButton(priceTrackBtn: HTMLButtonElement) {
         state.buttonAttempts += 1;
     }
 
-    setTimeout(() => watchForBuyButton(priceTrackBtn), 100);
+    setTimeout(() => watchForBuyButton(priceTrackBtn), 1000);
 }
 
 async function parseProduct() {
