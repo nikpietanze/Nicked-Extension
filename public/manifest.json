@@ -29,7 +29,7 @@
     "content_scripts": [
         {
             "matches": ["https://*.amazon.com/*"],
-            "run_at": "document_idle",
+            "run_at": "document_start",
             "js": ["amazon.js"]
         }
     ]

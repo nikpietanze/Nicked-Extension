@@ -1,13 +1,16 @@
 "use strict"
 
 import { datapoint } from "../background";
-import "dotenv/config"
 
 export default class User {
     email: string;
 
     constructor(email?: string) {
         this.email = email?.toLowerCase() ?? "";
+    }
+
+    validateEmail(email: string): boolean {
+        return email.includes("@") && email.includes(".");
     }
 
     async update(email: string): Promise<boolean> {
