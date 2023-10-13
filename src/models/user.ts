@@ -10,6 +10,10 @@ export default class User {
         this.email = email?.toLowerCase() ?? "";
     }
 
+    validateEmail(email: string): boolean {
+        return email.includes("@") && email.includes(".");
+    }
+
     async update(email: string): Promise<boolean> {
         this.email = email.toLowerCase();
         console.log(email);
