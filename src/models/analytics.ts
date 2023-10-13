@@ -1,7 +1,5 @@
 "use strict"
 
-import "dotenv/config"
-
 export default class DataPoint {
     event?: string;
     location?: string;
