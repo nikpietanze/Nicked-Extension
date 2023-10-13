@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.0.246",
+    "@types/dotenv-webpack": "^7.0.5",
     "@types/node": "^20.8.4",
     "copy-webpack-plugin": "^11.0.0",
     "eslint": "^8.51.0",
@@ -26,6 +27,6 @@
     "webpack-merge": "^5.9.0"
   },
   "dependencies": {
-    "dotenv": "^16.3.1"
+    "dotenv-webpack": "^8.0.1"
   }
 }

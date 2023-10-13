@@ -1,7 +1,6 @@
 "use strict"
 
 import { datapoint } from "../background";
-import "dotenv/config"
 
 export default class Product {
     currency?: string;
@@ -16,13 +15,14 @@ export default class Product {
         name?: string,
         price?: string,
         sku?: string,
+        store?: string,
         url?: URL
     ) {
         this.currency = currency;
         this.name = name;
         this.price = price;
         this.sku = sku;
-        this.store = "amazon";
+        this.store = store;
         this.url = url;
     }
 

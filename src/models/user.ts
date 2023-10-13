@@ -1,7 +1,6 @@
 "use strict"
 
 import { datapoint } from "../background";
-import "dotenv/config"
 
 export default class User {
     email: string;
