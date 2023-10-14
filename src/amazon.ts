@@ -2,6 +2,7 @@
 
 import Product from "./models/product";
 import { user, datapoint } from "./background"
+import submitEmailModal from "./views/modals/submitEmailModal"
 
 const product = new Product();
 product.url = new URL(window.location.href);
@@ -9,17 +10,71 @@ product.store = "amazon";
 datapoint.page = product.url.href;
 
 const state = {
+    loading: false,
     buttonAttempts: 0,
     errorReported: false,
+}
+
+function setTrackBtnLoading(btn: HTMLButtonElement) {
+    if (btn) {
+        btn.innerHTML = `
+            Processing
+            <span style="opacity:0;">.</span>
+            <span style="opacity:0;">.</span>
+            <span style="opacity:0;">.</span>
+        `;
+        let i = 0;
+
+        const animation = setInterval(() => {
+            if (!state.loading) {
+                clearInterval(animation);
+            }
+
+            const dots = btn.querySelectorAll("span");
+
+            if (i < 3) {
+                dots[i].style.opacity = "1";
+                i++;
+            } else {
+                dots.forEach((dot) => dot.style.opacity = "0");
+                i = 0;
+            }
+        }, 250)
+    }
+}
+
+function setTrackBtnSuccess(btn: HTMLButtonElement) {
+    console.log("setting button to success")
+    if (btn) {
+        state.loading = false;
+        btn.innerText = "Tracking Sales!";
+    }
+}
+
+function setTrackBtnError(btn: HTMLButtonElement) {
+    console.log("setting button to error")
+    if (btn) {
+        state.loading = false;
+        btn.innerText = "Whoops, something's wrong";
+    }
 }
 
 function watchForBuyButton(priceTrackBtn: HTMLButtonElement) {
     const buyNowBtn = document.querySelector("#buyNow_feature_div");
     if (buyNowBtn) {
         buyNowBtn.appendChild(priceTrackBtn);
-        priceTrackBtn.addEventListener("click", (e) => {
+        priceTrackBtn.addEventListener("click", async (e) => {
+            console.log("btn clicked")
             e.preventDefault();
-            parseProduct()
+            state.loading = true;
+            setTrackBtnLoading(priceTrackBtn);
+
+            const success = await parseProduct()
+            if (success) {
+                setTrackBtnSuccess(priceTrackBtn);
+            } else {
+                setTrackBtnError(priceTrackBtn);
+            }
         });
         return;
     } else {
@@ -35,7 +90,7 @@ function watchForBuyButton(priceTrackBtn: HTMLButtonElement) {
     setTimeout(() => watchForBuyButton(priceTrackBtn), 1000);
 }
 
-async function parseProduct() {
+async function parseProduct(): Promise<boolean> {
     const nameEl: HTMLSpanElement | null = document.querySelector("#productTitle");
     if (nameEl) {
         product.name = nameEl.innerText.trim();
@@ -101,11 +156,13 @@ async function parseProduct() {
         try {
             if (!user.email) {
                 console.log("firing email modal");
-                // TODO: fire email collection modal
+
             } else {
                 const success = await product.submitCreate(user.email);
                 if (!success) {
-                    // TODO: handle a failed create
+                    return false;
+                } else {
+                    return true;
                 }
             }
         } catch (err: any) {
@@ -116,6 +173,7 @@ async function parseProduct() {
             datapoint.send();
         }
     }
+    return false;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -126,6 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const priceTrackBtn = document.createElement("button");
         priceTrackBtn.innerText = "Watch For Sales";
         Object.assign(priceTrackBtn.style, {
+            "display": "flex",
+            "justifyContent": "center",
+            "alignItems": "center",
             "width": "100%",
             "padding": "8px",
             "marginTop": "-5px",
@@ -139,10 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "borderStyle": "solid",
             "borderWidth": "1px",
             "cursor": "pointer",
-            "display": "inline-block",
             "textAlign": "center",
             "textDecoration": "none!important",
-            "verticalAlign": "middle",
         });
 
         watchForBuyButton(priceTrackBtn);
