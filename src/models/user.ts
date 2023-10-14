@@ -14,10 +14,6 @@ export default class User {
     }
 
     async update(email: string): Promise<boolean> {
-        this.email = email.toLowerCase();
-        console.log(email);
-        return true;
-
         try {
             const res = await fetch("/api/user", {
                 method: "PUT",
@@ -25,7 +21,7 @@ export default class User {
                     "Authorization": process.env.SERVER_API_KEY ?? "",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email: this.email }),
+                body: JSON.stringify({ email }),
             });
             if (res.ok) {
                 return true;
@@ -41,8 +37,6 @@ export default class User {
     }
 
     async submit(): Promise<boolean> {
-        console.log(this);
-        return false;
         try {
             const res = await fetch("/api/user", {
                 method: "POST",
