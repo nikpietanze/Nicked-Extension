@@ -42,8 +42,6 @@ export default class Product {
     }
 
     async submitCreate(email: string): Promise<boolean> {
-        console.log(this);
-        return false;
         try {
             const res = await fetch("/api/price", {
                 method: "POST",
