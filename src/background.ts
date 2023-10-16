@@ -19,7 +19,7 @@ export const datapoint = new DataPoint();
 
 	try {
 		const sync: Sync = (await chrome.storage.sync.get()) as Sync;
-		Object.assign(user, sync.user);
+        Object.assign(user, user.refresh(sync.user.email, sync.user.id));
 		Object.assign(state, sync.state);
 	} catch (err: any) {
 		console.error(err);
