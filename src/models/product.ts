@@ -4,19 +4,24 @@ import { user, datapoint } from "../background";
 import Price from "./price";
 
 export default class Product {
-    id?: number;
-    active: boolean = true;
-    name?: string;
-    prices: Price[] = [];
+	id?: number;
+	active: boolean = true;
+	name?: string;
+	prices: Price[] = [];
 	sku?: string;
 	store: string = "amazon";
 	url?: URL;
 
+	/**
+	 * Parses the Product information to make sure it's ready to submit to the server
+	 *
+	 * @returns A boolean based on whether or not the Product is ready for submission
+	 */
 	isReady(): boolean {
 		if (this.name && this.sku && this.url) {
-            return true;
-        }
-        return false;
+			return true;
+		}
+		return false;
 	}
 
 	async submitCreate(email: string): Promise<boolean> {
@@ -24,11 +29,13 @@ export default class Product {
 			const res = await fetch("http://localhost:8080/api/product", {
 				method: "POST",
 				headers: {
-					Authorization: process.env.SERVER_API_KEY ?? "",
+					Authorization:
+						"basic " +
+						btoa(process.env.USERNAME + ":" + process.env.PASSWORD),
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					email,
+					email: email,
 					name: this.name,
 					price: this.prices,
 					sku: this.sku,
@@ -37,10 +44,25 @@ export default class Product {
 				}),
 			});
 			if (res.ok) {
-                const data = await res.json();
-                if (data) {
-                    user.products?.push(data);
-                }
+				const data = await res.json();
+				if (data) {
+					this.id = data.Id;
+					this.active = data.Active;
+					this.name = data.Name;
+					this.store = data.Store;
+					this.sku = data.Sku;
+					this.url = data.Url;
+					if (data.Prices && data.Prices.length) {
+						data.Prices.forEach((price: any) => {
+							const pr = new Price();
+							pr.id = price.Id;
+							pr.amount = price.Amount;
+							pr.currency = price.Currency;
+						});
+					}
+					user.products?.push(this);
+					return true;
+				}
 			}
 		} catch (err: any) {
 			console.error(err);
@@ -52,29 +74,20 @@ export default class Product {
 		return false;
 	}
 
-    async isBeingTracked(email: string): Promise<boolean> {
-        if (!this.sku || !this.store || !email) {
-            return false;
-        }
-
-        try {
-			const res = await fetch(`http://localhost:8080/api/product?email=${email}&store=${this.store}&sku=${this.sku}`, {
-				method: "GET",
-				headers: {
-					Authorization: process.env.SERVER_API_KEY ?? "",
-				},
+	/**
+	 * Parses the user to determine if the current Product is being tracked or not
+	 *
+	 * @returns A boolean based on whether or not the Product is being tracked
+	 */
+	async isBeingTracked(): Promise<boolean> {
+		let tracking = false;
+		if (user.products && user.products.length) {
+			user.products.forEach((product) => {
+				if (product.sku === this.sku && product.store === this.store) {
+					tracking = product.active;
+				}
 			});
-			if (res.ok) {
-                const data = await res.json();
-                return data.active;
-			}
-        } catch(err: any) {
-			console.error(err);
-			datapoint.event = "nicked_ext_error";
-			datapoint.location = "product_is_being_tracked";
-			datapoint.details = err.message;
-			datapoint.send();
-        }
-        return false;
-    }
+		}
+		return tracking;
+	}
 }

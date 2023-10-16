@@ -11,16 +11,12 @@ export const state = new State();
 export const datapoint = new DataPoint();
 
 (async () => {
-	if (state.isInstalling) {
-		chrome.storage.sync.set(user);
-		state.isInstalling = false;
-		chrome.storage.sync.set(state);
-	}
-
 	try {
 		const sync: Sync = (await chrome.storage.sync.get()) as Sync;
-        Object.assign(user, user.refresh(sync.user.email, sync.user.id));
-		Object.assign(state, sync.state);
+
+		if (sync.user && sync.user.email) {
+			await user.refresh(sync.user.email, sync.user.id);
+		}
 	} catch (err: any) {
 		console.error(err);
 		datapoint.event = "nicked_ext_error";

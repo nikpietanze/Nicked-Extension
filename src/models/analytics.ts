@@ -10,22 +10,11 @@ export default class DataPoint {
 	data1?: string;
 	data2?: string;
 
-	constructor(
-		event?: string,
-		location?: string,
-		page?: string,
-		details?: string,
-		data1?: string,
-		data2?: string,
-	) {
-		this.event = event;
-		this.location = location;
-		this.page = page;
-		this.details = details;
-		this.data1 = data1;
-		this.data2 = data2;
-	}
-
+	/**
+	 * Parses the DataPoint information to make sure it's ready to submit to the server
+	 *
+	 * @returns A boolean based on whether or not the DataPoint is ready to submit
+	 */
 	isReady(): boolean {
 		if (this.event && this.page) {
 			return true;
@@ -33,6 +22,9 @@ export default class DataPoint {
 		return false;
 	}
 
+	/**
+	 * Resets the DataPoint's non static values
+	 */
 	reset(): void {
 		this.event = "";
 		this.location = "";
@@ -41,6 +33,11 @@ export default class DataPoint {
 		this.data2 = "";
 	}
 
+	/**
+	 * Sends a request to the server to create the DataPoint
+	 *
+	 * @returns A boolean showing whether or not the call was successful
+	 */
 	async send(): Promise<boolean> {
 		if (!this.isReady) {
 			return false;
