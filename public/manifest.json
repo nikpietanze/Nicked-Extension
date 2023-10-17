@@ -11,7 +11,7 @@
 	},
 	"web_accessible_resources": [
 		{
-			"resources": ["icons/icon_128.png"],
+			"resources": ["images/logo_icon.png"],
 			"matches": ["<all_urls>"]
 		}
 	],
