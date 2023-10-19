@@ -213,6 +213,12 @@ async function parseProduct(): Promise<Price> {
         product.name = nameEl.innerText.trim();
     }
 
+    const productImage: HTMLImageElement | null = document.querySelector("#imgTagWrapperId img");
+    if (productImage) {
+        console.log(productImage);
+        product.imageUrl = productImage.src;
+    }
+
     const currencySymbolEl: HTMLSpanElement | null = document.querySelector(
         "span.a-price-symbol",
     );
