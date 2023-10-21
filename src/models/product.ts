@@ -25,6 +25,11 @@ export default class Product {
         return false;
     }
 
+    /**
+     * Calls the server to create a new product to be tracked
+     *
+     * @returns A boolean based on whether or not the Product was submitted successfully
+     */
     async submitCreate(email: string): Promise<boolean> {
         try {
             const res = await fetch("http://localhost:8080/api/product", {
@@ -86,11 +91,92 @@ export default class Product {
         let tracking = false;
         if (user.products && user.products.length) {
             user.products.forEach((product) => {
-                if (product.sku === this.sku && product.store === this.store) {
+                if (
+                    product.sku?.toLowerCase() === this.sku?.toLowerCase() &&
+                    product.store.toLowerCase() === this.store.toLowerCase()
+                ) {
                     tracking = product.active;
                 }
             });
         }
         return tracking;
+    }
+
+    /**
+     * Calls the server to update the product with active: true
+     *
+     * @returns A boolean based on whether or not the Product was successfully updated
+     */
+    static async setActive(id: string): Promise<boolean> {
+        try {
+            const res = await fetch(`http://localhost:8080/api/product/${id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization:
+                        "basic " +
+                        btoa(process.env.USERNAME + ":" + process.env.PASSWORD),
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    active: true,
+                }),
+            });
+            if (res.ok) {
+                for (let i = 0; i < user.products.length; i++) {
+                    const p = user.products[i];
+                    if (p.id === parseInt(id)) {
+                        p.active = true;
+                        chrome.storage.sync.set({ user: user });
+                    }
+                }
+                return true;
+            }
+        } catch (err: any) {
+            console.error(err);
+            datapoint.event = "nicked_ext_error";
+            datapoint.location = "product_set_active";
+            datapoint.details = err.message;
+            datapoint.send();
+        }
+        return false;
+    }
+
+    /**
+     * Calls the server to update the product with active: false
+     *
+     * @returns A boolean based on whether or not the Product was successfully updated
+     */
+    static async setNotActive(id: string): Promise<boolean> {
+        try {
+            const res = await fetch(`http://localhost:8080/api/product/${id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization:
+                        "basic " +
+                        btoa(process.env.USERNAME + ":" + process.env.PASSWORD),
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    active: false,
+                }),
+            });
+            if (res.ok) {
+                for (let i = 0; i < user.products.length; i++) {
+                    const p = user.products[i];
+                    if (p.id === parseInt(id)) {
+                        p.active = false;
+                        chrome.storage.sync.set({ user: user });
+                    }
+                }
+                return true;
+            }
+        } catch (err: any) {
+            console.error(err);
+            datapoint.event = "nicked_ext_error";
+            datapoint.location = "product_set_not_active";
+            datapoint.details = err.message;
+            datapoint.send();
+        }
+        return false;
     }
 }

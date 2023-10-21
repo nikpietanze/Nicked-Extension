@@ -27,6 +27,8 @@ const btnImageStyles = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
+    console.log(user);
+
     if (product.url?.pathname.includes("/dp/")) {
         const pathParts = product.url.pathname.split("/");
         product.sku = pathParts[pathParts.indexOf("dp") + 1];
