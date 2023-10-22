@@ -208,6 +208,11 @@ function watchForBuyButton(priceTrackBtn: HTMLButtonElement) {
 }
 
 async function parseProduct(): Promise<Price> {
+    const savingsEl: HTMLSpanElement | null = document.querySelector("span.savingsPercentage");
+    if (savingsEl && savingsEl.innerText !== "") {
+        product.onSale = true;
+    }
+
     const price = new Price();
     const nameEl: HTMLSpanElement | null =
         document.querySelector("#productTitle");

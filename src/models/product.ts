@@ -7,6 +7,7 @@ export default class Product {
     id?: number;
     active: boolean = true;
     imageUrl?: string;
+    onSale: boolean = false;
     name?: string;
     prices: Price[] = [];
     sku?: string;
@@ -44,6 +45,7 @@ export default class Product {
                     email: email,
                     name: this.name,
                     imageUrl: this.imageUrl,
+                    onSale: this.onSale,
                     price: this.prices,
                     sku: this.sku,
                     store: this.store,
@@ -56,6 +58,7 @@ export default class Product {
                     this.id = data.Id;
                     this.active = data.Active;
                     this.imageUrl = data.ImageUrl;
+                    this.onSale = data.OnSale;
                     this.name = data.Name;
                     this.store = data.Store;
                     this.sku = data.Sku;
