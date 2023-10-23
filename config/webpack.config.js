@@ -9,6 +9,7 @@ import { Paths } from "./paths.js";
 export default (_env, argv) =>
     merge(Common, {
         entry: {
+            options: Paths.src + "/views/options.ts",
             popup: Paths.src + "/views/popup.ts",
             amazon: Paths.src + "/amazon.ts",
             background: Paths.src + "/background.ts",

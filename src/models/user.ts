@@ -57,7 +57,8 @@ export default class User {
 								const p = new Product();
 								p.id = product.Id;
 								p.active = product.Active;
-                                p.imageUrl = product.ImageUrl;
+								p.imageUrl = product.ImageUrl;
+								p.onSale = product.OnSale;
 								p.name = product.Name;
 								p.store = product.Store;
 								p.sku = product.Sku;
@@ -108,7 +109,8 @@ export default class User {
 								const p = new Product();
 								p.id = product.Id;
 								p.active = product.Active;
-                                p.imageUrl = product.ImageUrl;
+								p.imageUrl = product.ImageUrl;
+								p.onSale = product.OnSale;
 								p.name = product.Name;
 								p.store = product.Store;
 								p.sku = product.Sku;
@@ -205,7 +207,8 @@ export default class User {
 						const p = new Product();
 						p.id = product.Id;
 						p.active = product.Active;
-                        p.imageUrl = product.ImageUrl;
+						p.imageUrl = product.ImageUrl;
+						p.onSale = product.OnSale;
 						p.name = product.Name;
 						p.store = product.Store;
 						p.sku = product.Sku;
