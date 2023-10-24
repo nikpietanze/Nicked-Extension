@@ -25,8 +25,61 @@
 		<link rel="stylesheet" href="output.css" />
 	</head>
 
-	<body>
-		<div id="app"></div>
+	<body class="bg-indigo-800">
+		<nav class="p-4 mb-4">
+			<img class="w-32" src="/images/logo.webp" alt="Nicked" />
+		</nav>
+
+		<div id="app">
+			<div
+				class="overflow-hidden rounded-lg border border-gray-200 shadow-md m-5"
+			>
+				<table
+					class="w-full border-collapse bg-white text-left text-sm text-gray-500"
+				>
+					<thead class="bg-gray-200">
+						<tr>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900"
+							>
+								Name
+							</th>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900 text-center"
+							>
+								Store
+							</th>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900 text-center"
+							>
+								State
+							</th>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900 text-center"
+							>
+								Tracking
+							</th>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900"
+							></th>
+							<th
+								scope="col"
+								class="px-6 py-4 font-medium text-gray-900"
+							></th>
+						</tr>
+					</thead>
+					<tbody
+						id="products"
+						class="divide-y divide-gray-100 border-t border-gray-100"
+					></tbody>
+				</table>
+			</div>
+		</div>
 
 		<script src="options.js"></script>
 	</body>

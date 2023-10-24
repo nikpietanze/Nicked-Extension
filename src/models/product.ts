@@ -129,7 +129,7 @@ export default class Product {
 					const p = user.products[i];
 					if (p.id === parseInt(id)) {
 						p.active = true;
-						chrome.storage.sync.set({ user: user });
+						await chrome.storage.sync.set({ user: user });
 					}
 				}
 				return true;
@@ -168,7 +168,7 @@ export default class Product {
 					const p = user.products[i];
 					if (p.id === parseInt(id)) {
 						p.active = false;
-						chrome.storage.sync.set({ user: user });
+						await chrome.storage.sync.set({ user: user });
 					}
 				}
 				return true;
@@ -177,6 +177,39 @@ export default class Product {
 			console.error(err);
 			datapoint.event = "nicked_ext_error";
 			datapoint.location = "product_set_not_active";
+			datapoint.details = err.message;
+			datapoint.send();
+		}
+		return false;
+	}
+
+	/**
+	 * Calls the server to delete the product
+	 *
+	 * @returns A boolean based on whether or not the Product was successfully deleted
+	 */
+	static async delete(id: string): Promise<boolean> {
+		try {
+			const res = await fetch(`http://localhost:8080/api/product/${id}`, {
+				method: "DELETE",
+				headers: {
+					Authorization:
+						"basic " +
+						btoa(process.env.USERNAME + ":" + process.env.PASSWORD),
+					"Content-Type": "application/json",
+				},
+			});
+			if (res.ok) {
+				user.products = user.products.filter(
+					(p) => p.id !== parseInt(id),
+				);
+				await chrome.storage.sync.set({ user: user });
+				return true;
+			}
+		} catch (err: any) {
+			console.error(err);
+			datapoint.event = "nicked_ext_error";
+			datapoint.location = "product_delete";
 			datapoint.details = err.message;
 			datapoint.send();
 		}
