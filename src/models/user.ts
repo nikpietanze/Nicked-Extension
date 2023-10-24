@@ -8,6 +8,8 @@ export default class User {
 	id?: number;
 	email: string;
 	products: Product[] = [];
+    emailNotifications: boolean = true;
+    browserNotifications: boolean = true;
 
 	constructor(email?: string) {
 		this.email = email?.toLowerCase() ?? "";
@@ -24,15 +26,15 @@ export default class User {
 	 * @param id - The user's id (optional)
 	 * @returns The current user instance if successful
 	 */
-	async refresh(email: string, id?: number): Promise<User | null> {
-		if (!id && !email) {
+	async refresh(user: User): Promise<User | null> {
+		if (!user.id && !user.email) {
 			return null;
 		}
 
 		try {
-			if (id) {
+			if (user.id) {
 				const res = await fetch(
-					"http://localhost:8080/api/user/" + id,
+					"http://localhost:8080/api/user/" + user.id,
 					{
 						method: "GET",
 						headers: {
@@ -51,6 +53,8 @@ export default class User {
 					if (data) {
 						this.id = data.Id;
 						this.email = data.Email;
+                        this.emailNotifications = user.emailNotifications;
+                        this.browserNotifications = user.browserNotifications;
 
 						if (data.Products && data.Products.length) {
 							data.Products.forEach((product: any) => {
@@ -84,7 +88,7 @@ export default class User {
 				}
 			} else {
 				const res = await fetch(
-					"http://localhost:8080/api/user?email=" + email,
+					"http://localhost:8080/api/user?email=" + user.email,
 					{
 						method: "GET",
 						headers: {
@@ -103,6 +107,8 @@ export default class User {
 					if (data) {
 						this.id = data.Id;
 						this.email = data.Email;
+                        this.emailNotifications = user.emailNotifications;
+                        this.browserNotifications = user.browserNotifications;
 
 						if (data.Products && data.Products.length) {
 							data.Products.forEach((product: any) => {

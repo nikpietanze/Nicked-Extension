@@ -4,66 +4,125 @@ import { datapoint, user } from "../background";
 import Product from "../models/product";
 
 interface Elements {
-	app: HTMLDivElement | null;
-	products: HTMLDivElement | null;
+    app: HTMLDivElement | null;
+    products: HTMLDivElement | null;
+    email: HTMLInputElement | null,
+    notifications: {
+        email: HTMLInputElement | null,
+        browser: HTMLInputElement | null,
+    }
 }
 
 const state = {
-	loading: false,
+    loading: false,
 };
+
 const elements: Elements = {
-	app: null,
-	products: null,
+    app: null,
+    products: null,
+    email: null,
+    notifications: {
+        email: null,
+        browser: null,
+    }
 };
+
+document.addEventListener("DOMContentLoaded", async () => {
+    state.loading = true;
+
+    elements.app = document.querySelector("#app");
+    elements.products = document.querySelector("#products");
+    elements.email = document.querySelector("#email");
+    elements.notifications.email = document.querySelector("#email-notifications");
+    elements.notifications.browser = document.querySelector("#browser-notifications");
+
+    setTimeout(async () => {
+        if (user.email && elements.email) {
+            elements.email.value = user.email;
+            elements.email.classList.remove("text-stone-100");
+            elements.email.classList.add("pointer-events-none", "text-stone-400");
+        }
+
+        if (elements.notifications.email) {
+            elements.notifications.email.checked = user.emailNotifications;
+
+            elements.notifications.email.addEventListener("click", () => {
+                user.emailNotifications = !user.emailNotifications;
+                chrome.storage.sync.set({ user: user });
+            })
+        }
+
+        if (elements.notifications.browser) {
+            elements.notifications.browser.checked = user.browserNotifications;
+
+            elements.notifications.browser.addEventListener("click", () => {
+                user.browserNotifications = !user.browserNotifications;
+                chrome.storage.sync.set({ user: user });
+            })
+        }
+
+        if (user.products.length) {
+            try {
+                await parseProducts();
+                handleTrackingCheckboxes();
+                handleDelete();
+            } catch (err: any) {
+                datapoint.event = "nicked_ext_error";
+                datapoint.location = "options_init";
+                datapoint.details = err.message;
+                datapoint.send();
+            }
+        } else {
+            // TODO: handle no products
+        }
+    }, 100);
+
+    state.loading = false;
+});
 
 async function parseProducts() {
-	if (user.products && !user.products.length) {
-		setTimeout(parseProducts, 100);
-		return;
-	}
+    if (user.products && !user.products.length) {
+        setTimeout(parseProducts, 100);
+        return;
+    }
 
-	for (let i = 0; i < user.products.length; i++) {
-		const product = user.products[i];
-		const productTr = document.createElement("tr");
-		productTr.classList.add("transtion", "hover:bg-gray-50");
+    for (let i = 0; i < user.products.length; i++) {
+        const product = user.products[i];
+        const productTr = document.createElement("tr");
+        productTr.classList.add("transtion", "hover:bg-gray-50");
 
-		productTr.id = product.id?.toString() ?? "";
+        productTr.id = product.id?.toString() ?? "";
 
-		productTr.innerHTML = `
+        productTr.innerHTML = `
                         <th class="flex items-center gap-3 px-6 py-4 font-normal text-gray-900">
                             <div class="relative h-10 w-10">
                                 <img class="h-full w-full"
                                     src="${product.imageUrl}"
                                     alt="" /> </div>
-                            <div class="font-medium text-gray-700 max-w-xs truncate" x-tooltip="${
-								product.name
-							}">${product.name}</div>
+                            <div class="font-medium text-gray-700 max-w-xs truncate" x-tooltip="${product.name
+            }">${product.name}</div>
                         </th>
                         <td class="px-6 py-4 text-center">${product.store}</td>
                         <td class="state px-6 py-4">
                             <span
-                                class="w-full max-w-fit m-auto flex justify-center items-center gap-1 rounded-full ${
-									product.active
-										? "bg-green-50 text-green-600"
-										: "bg-red-50 text-red-600"
-								} px-2 py-1 text-xs font-semibold">
-                                <span class="h-1.5 w-1.5 rounded-full ${
-									product.active
-										? "bg-green-600"
-										: "bg-red-600"
-								}"></span>
+                                class="w-full max-w-fit m-auto flex justify-center items-center gap-1 rounded-full ${product.active
+                ? "bg-green-50 text-green-600"
+                : "bg-red-50 text-red-600"
+            } px-2 py-1 text-xs font-semibold">
+                                <span class="h-1.5 w-1.5 rounded-full ${product.active
+                ? "bg-green-600"
+                : "bg-red-600"
+            }"></span>
                                 ${product.active ? "Active" : "Inactive"}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <input type="checkbox" class="active-checkbox bg-indigo-50 border-gray-300 cursor-pointer focus:ring-3 focus:ring-indigo-300 h-4 w-4 rounded" checked="${
-								product.active
-							}">
+                            <input type="checkbox" class="active-checkbox bg-indigo-50 border-gray-300 cursor-pointer focus:ring-3 focus:ring-indigo-300 h-4 w-4 rounded" checked="${product.active
+            }">
                         </td>
                         <td class="px-6 py-4">
-                            <a class="inline-flex items-center gap-1 rounded-full transition bg-blue-50 hover:bg-blue-200 px-4 py-2 text-md font-semibold text-blue-600" href="${
-								product.url
-							}" target="_blank">View Product</a>
+                            <a class="inline-flex items-center gap-1 rounded-full transition bg-blue-50 hover:bg-blue-200 px-4 py-2 text-md font-semibold text-blue-600" href="${product.url
+            }" target="_blank">View Product</a>
                         </td>
                         <td class="px-6 py-4">
                             <button class="delete-button" x-data="{ tooltip: 'Delete' }">
@@ -75,25 +134,25 @@ async function parseProducts() {
                         </td>
         `;
 
-		elements.products?.appendChild(productTr);
-	}
+        elements.products?.appendChild(productTr);
+    }
 }
 
 function handleTrackingCheckboxes() {
-	const checkboxes: NodeListOf<HTMLInputElement> =
-		document.querySelectorAll(".active-checkbox");
+    const checkboxes: NodeListOf<HTMLInputElement> =
+        document.querySelectorAll(".active-checkbox");
 
-	for (let i = 0; i < checkboxes.length; i++) {
-		const checkbox: HTMLInputElement = checkboxes[i];
-		const id = checkbox.parentElement?.parentElement?.id;
-		const product = document.getElementById(id ?? "");
+    for (let i = 0; i < checkboxes.length; i++) {
+        const checkbox: HTMLInputElement = checkboxes[i];
+        const id = checkbox.parentElement?.parentElement?.id;
+        const product = document.getElementById(id ?? "");
 
-		if (id && product) {
-			const state: HTMLDivElement | null =
-				product.querySelector(".state span");
+        if (id && product) {
+            const state: HTMLDivElement | null =
+                product.querySelector(".state span");
 
-			checkbox.addEventListener("click", async () => {
-				if (!checkbox.checked) {
+            checkbox.addEventListener("click", async () => {
+                if (!checkbox.checked) {
                     try {
                         const success = await Product.setNotActive(id);
                         if (success && state) {
@@ -110,7 +169,7 @@ function handleTrackingCheckboxes() {
                         datapoint.details = err.message;
                         datapoint.send();
                     }
-				} else {
+                } else {
                     try {
                         const success = await Product.setActive(id);
                         if (success && state) {
@@ -127,21 +186,21 @@ function handleTrackingCheckboxes() {
                         datapoint.details = err.message;
                         datapoint.send();
                     }
-				}
-			});
-		}
-	}
+                }
+            });
+        }
+    }
 }
 
 function handleDelete() {
-	const deleteBtns: NodeListOf<HTMLButtonElement> =
-		document.querySelectorAll(".delete-button");
+    const deleteBtns: NodeListOf<HTMLButtonElement> =
+        document.querySelectorAll(".delete-button");
 
-	for (let i = 0; i < deleteBtns.length; i++) {
-		const btn = deleteBtns[i];
-		btn.addEventListener("click", async () => {
-			const id = btn.parentElement?.parentElement?.id;
-			if (id) {
+    for (let i = 0; i < deleteBtns.length; i++) {
+        const btn = deleteBtns[i];
+        btn.addEventListener("click", async () => {
+            const id = btn.parentElement?.parentElement?.id;
+            if (id) {
                 try {
                     const success = await Product.delete(id);
                     if (success) {
@@ -154,33 +213,8 @@ function handleDelete() {
                     datapoint.details = err.message;
                     datapoint.send();
                 }
-			}
-		});
-	}
+            }
+        });
+    }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-	state.loading = true;
-
-	elements.app = document.querySelector("#app");
-	elements.products = document.querySelector("#products");
-
-	setTimeout(async () => {
-		if (user.products.length) {
-            try {
-                await parseProducts();
-                handleTrackingCheckboxes();
-                handleDelete();
-            } catch (err: any) {
-                datapoint.event = "nicked_ext_error";
-                datapoint.location = "options_init";
-                datapoint.details = err.message;
-                datapoint.send();
-            }
-		} else {
-			// TODO: handle no products
-		}
-	}, 100);
-
-	state.loading = false;
-});

@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.toggle-bg:after {
+    content: '';
+    @apply absolute left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition shadow-sm;
+}
+input:checked + .toggle-bg:after {
+    transform: translateX(100%);
+    @apply border-white;
+}
+input:checked + .toggle-bg {
+    @apply bg-indigo-600 border-indigo-600;
+}
