@@ -17,7 +17,7 @@ export const datapoint = new DataPoint();
 		const sync: Sync = (await chrome.storage.sync.get()) as Sync;
 
 		if (sync.user && sync.user.email) {
-			await user.refresh(sync.user.email, sync.user.id);
+			await user.refresh(sync.user);
 
 			for (let i = 0; i < user.products.length; i++) {
 				const p = user.products[i];
@@ -48,7 +48,6 @@ export const datapoint = new DataPoint();
 		periodInMinutes: 1445,
 	});
 
-	chrome.runtime.openOptionsPage();
 })();
 
 chrome.runtime.onMessage.addListener(messageHandler);

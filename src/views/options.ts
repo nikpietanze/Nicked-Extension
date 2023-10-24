@@ -1,199 +1,220 @@
 "use strict";
 
-import { user } from "../background";
+import { datapoint, user } from "../background";
 import Product from "../models/product";
 
 interface Elements {
-	app: HTMLDivElement | null;
-	main: HTMLElement | null;
-	products: HTMLDivElement | null;
-	saleProducts: HTMLDivElement | null;
+    app: HTMLDivElement | null;
+    products: HTMLDivElement | null;
+    email: HTMLInputElement | null,
+    notifications: {
+        email: HTMLInputElement | null,
+        browser: HTMLInputElement | null,
+    }
 }
 
 const state = {
-	loading: false,
+    loading: false,
 };
+
 const elements: Elements = {
-	app: null,
-	main: null,
-	products: null,
-	saleProducts: null,
+    app: null,
+    products: null,
+    email: null,
+    notifications: {
+        email: null,
+        browser: null,
+    }
 };
-
-function generateIconUrl(active: boolean): string {
-	return active ? "/images/checkmark.svg" : "/images/delete.svg";
-}
-
-function parseProducts() {
-	if (user.products && !user.products.length) {
-		setTimeout(parseProducts, 100);
-		return;
-	}
-
-	for (let i = 0; i < user.products.length; i++) {
-		const product = user.products[i];
-		const iconUrl = generateIconUrl(product.active);
-		const productEl = document.createElement("a");
-
-		productEl.href = product.url?.toString() ?? "#!";
-		productEl.target = "_blank";
-		productEl.id = product.id?.toString() ?? "";
-		productEl.classList.add(
-			"flex",
-			"justify-between",
-			"items-center",
-			"gap-2",
-			"h-14",
-			"p-3",
-			"rounded",
-			"transition",
-			"hover:bg-indigo-700",
-		);
-
-		productEl.innerHTML = `
-            <img class="w-8" src="${product.imageUrl}" alt="" />
-            <span class="flex-auto text-stone-200 text-md font-semibold truncate">${
-				product.name
-			}</span>
-            <img class="icon ${
-				product.active
-			} w-6" src="${chrome.runtime.getURL(iconUrl)}" alt="" />
-        `;
-
-		productEl.addEventListener("click", (e) => {
-			// @ts-ignore
-			if (e.target.classList.contains("icon")) {
-				e.preventDefault();
-			}
-		});
-
-		if (product.onSale) {
-			elements.saleProducts?.appendChild(productEl);
-		} else {
-			elements.products?.appendChild(productEl);
-		}
-	}
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
-	state.loading = true;
+    state.loading = true;
 
-	elements.app = document.querySelector("#app");
-	elements.app?.classList.add(
-		"font-['Gabarito']",
-		"w-80",
-		"h-fit",
-		"bg-indigo-800",
-		"text-white",
-		"p-3",
-	);
+    elements.app = document.querySelector("#app");
+    elements.products = document.querySelector("#products");
+    elements.email = document.querySelector("#email");
+    elements.notifications.email = document.querySelector("#email-notifications");
+    elements.notifications.browser = document.querySelector("#browser-notifications");
 
-	elements.main = document.createElement("main");
-	elements.main.innerHTML = `
-        <nav class="mb-4">
-            <img class="w-24" src="${chrome.runtime.getURL(
-				"/images/logo.webp",
-			)}" alt="Nicked" />
-        </nav>
-    `;
+    setTimeout(async () => {
+        if (user.email && elements.email) {
+            elements.email.value = user.email;
+            elements.email.classList.remove("text-stone-100");
+            elements.email.classList.add("pointer-events-none", "text-stone-400");
+        }
 
-	elements.saleProducts = document.createElement("div");
-	elements.saleProducts.classList.add(
-		"flex",
-		"flex-col",
-		"gap-2",
-		"rounded-xl",
-		"bg-indigo-950",
-		"border-2",
-		"border-green-400/75",
-		"shadow-lg",
-		"shadow-indigo-950",
-		"mb-3",
-		"p-3",
-		"max-h-80",
-		"overflow-y-scroll",
-	);
-	elements.saleProducts.innerHTML = `
-        <h2 class="text-xl text-indigo-500 text-center font-semibold mb-2">Active Sales</h2>
-        <div class="flex justify-between items-center gap-2 px-3 border-b border-b-indigo-400 text-indigo-400">
-            <span class="basis-8"></span>
-            <span class="flex-auto text-center">Name</span>
-            <span class="basis-6 text-center">Tracking</span>
-        </div>
-    `;
+        if (elements.notifications.email) {
+            elements.notifications.email.checked = user.emailNotifications;
 
-	elements.products = document.createElement("div");
-	elements.products.classList.add(
-		"flex",
-		"flex-col",
-		"gap-2",
-		"rounded-xl",
-		"bg-indigo-950",
-		"shadow-lg",
-		"shadow-indigo-950",
-		"p-3",
-		"max-h-80",
-		"overflow-y-scroll",
-	);
-	elements.products.innerHTML = `
-        <h2 class="text-xl text-indigo-500 text-center font-semibold mb-2">Watching</h2>
-        <div class="flex justify-between items-center gap-2 px-3 border-b border-b-indigo-400 text-indigo-400">
-            <span class="basis-8"></span>
-            <span class="flex-auto text-center">Name</span>
-            <span class="basis-6 text-center">Tracking</span>
-        </div>
-    `;
+            elements.notifications.email.addEventListener("click", () => {
+                user.emailNotifications = !user.emailNotifications;
+                chrome.storage.sync.set({ user: user });
+            })
+        }
 
-	setTimeout(() => {
-		if (user.products.length) {
-			parseProducts();
-		} else {
-			const msgEl = document.createElement("span");
-			msgEl.classList.add("text-stone-200", "text-center");
-			msgEl.innerText = "No tracked products yet";
-			elements.products?.appendChild(msgEl);
-		}
+        if (elements.notifications.browser) {
+            elements.notifications.browser.checked = user.browserNotifications;
 
-		// TODO: if is loading, show spinner
-		const iconEls: NodeListOf<HTMLImageElement> =
-			document.querySelectorAll("img.icon");
+            elements.notifications.browser.addEventListener("click", () => {
+                user.browserNotifications = !user.browserNotifications;
+                chrome.storage.sync.set({ user: user });
+            })
+        }
 
-		for (let i = 0; i < iconEls.length; i++) {
-			const iconEl = iconEls[i];
+        if (user.products.length) {
+            try {
+                await parseProducts();
+                handleTrackingCheckboxes();
+                handleDelete();
+            } catch (err: any) {
+                datapoint.event = "nicked_ext_error";
+                datapoint.location = "options_init";
+                datapoint.details = err.message;
+                datapoint.send();
+            }
+        } else {
+            // TODO: handle no products
+        }
+    }, 100);
 
-			iconEl.addEventListener("click", async () => {
-				const productId = iconEl.parentElement?.id ?? "";
-
-				let active = iconEl.classList.contains("true");
-				if (active) {
-					const success = await Product.setNotActive(productId);
-					if (success) {
-						iconEl.src = generateIconUrl(false);
-						iconEl.classList.remove("true");
-						iconEl.classList.add("false");
-					}
-				} else {
-					const success = await Product.setActive(productId);
-					if (success) {
-						iconEl.src = generateIconUrl(true);
-						iconEl.classList.add("true");
-						iconEl.classList.remove("false");
-					}
-				}
-			});
-		}
-
-		if (elements.saleProducts?.children.length === 2) {
-			const msgEl = document.createElement("span");
-			msgEl.classList.add("text-stone-200", "text-center");
-			msgEl.innerText = "No active sales yet";
-			elements.saleProducts.appendChild(msgEl);
-		}
-	}, 100);
-
-	elements.main.appendChild(elements.saleProducts);
-	elements.main.appendChild(elements.products);
-	elements.app?.appendChild(elements.main);
-
-	state.loading = false;
+    state.loading = false;
 });
+
+async function parseProducts() {
+    if (user.products && !user.products.length) {
+        setTimeout(parseProducts, 100);
+        return;
+    }
+
+    for (let i = 0; i < user.products.length; i++) {
+        const product = user.products[i];
+        const productTr = document.createElement("tr");
+        productTr.classList.add("transtion", "hover:bg-gray-50");
+
+        productTr.id = product.id?.toString() ?? "";
+
+        productTr.innerHTML = `
+                        <th class="flex items-center gap-3 px-6 py-4 font-normal text-gray-900">
+                            <div class="relative h-10 w-10">
+                                <img class="h-full w-full"
+                                    src="${product.imageUrl}"
+                                    alt="" /> </div>
+                            <div class="font-medium text-gray-700 max-w-xs truncate" x-tooltip="${product.name
+            }">${product.name}</div>
+                        </th>
+                        <td class="px-6 py-4 text-center">${product.store}</td>
+                        <td class="state px-6 py-4">
+                            <span
+                                class="w-full max-w-fit m-auto flex justify-center items-center gap-1 rounded-full ${product.active
+                ? "bg-green-50 text-green-600"
+                : "bg-red-50 text-red-600"
+            } px-2 py-1 text-xs font-semibold">
+                                <span class="h-1.5 w-1.5 rounded-full ${product.active
+                ? "bg-green-600"
+                : "bg-red-600"
+            }"></span>
+                                ${product.active ? "Active" : "Inactive"}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <input type="checkbox" class="active-checkbox bg-indigo-50 border-gray-300 cursor-pointer focus:ring-3 focus:ring-indigo-300 h-4 w-4 rounded" checked="${product.active
+            }">
+                        </td>
+                        <td class="px-6 py-4">
+                            <a class="inline-flex items-center gap-1 rounded-full transition bg-blue-50 hover:bg-blue-200 px-4 py-2 text-md font-semibold text-blue-600" href="${product.url
+            }" target="_blank">View Product</a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button class="delete-button" x-data="{ tooltip: 'Delete' }">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="h-6 w-6" x-tooltip="tooltip">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                            </button>
+                        </td>
+        `;
+
+        elements.products?.appendChild(productTr);
+    }
+}
+
+function handleTrackingCheckboxes() {
+    const checkboxes: NodeListOf<HTMLInputElement> =
+        document.querySelectorAll(".active-checkbox");
+
+    for (let i = 0; i < checkboxes.length; i++) {
+        const checkbox: HTMLInputElement = checkboxes[i];
+        const id = checkbox.parentElement?.parentElement?.id;
+        const product = document.getElementById(id ?? "");
+
+        if (id && product) {
+            const state: HTMLDivElement | null =
+                product.querySelector(".state span");
+
+            checkbox.addEventListener("click", async () => {
+                if (!checkbox.checked) {
+                    try {
+                        const success = await Product.setNotActive(id);
+                        if (success && state) {
+                            state.classList.remove("bg-green-50", "text-green-600");
+                            state.classList.add("bg-red-50", "text-red-600");
+                            state.innerHTML = `
+                            <span class="h-1.5 w-1.5 rounded-full bg-red-600"></span>
+                            Inactive
+                            `;
+                        }
+                    } catch (err: any) {
+                        datapoint.event = "nicked_ext_error";
+                        datapoint.location = "options_set_not_active";
+                        datapoint.details = err.message;
+                        datapoint.send();
+                    }
+                } else {
+                    try {
+                        const success = await Product.setActive(id);
+                        if (success && state) {
+                            state.classList.remove("bg-red-50", "text-red-600");
+                            state.classList.add("bg-green-50", "text-green-600");
+                            state.innerHTML = `
+                            <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+                            Active
+                            `;
+                        }
+                    } catch (err: any) {
+                        datapoint.event = "nicked_ext_error";
+                        datapoint.location = "options_set_active";
+                        datapoint.details = err.message;
+                        datapoint.send();
+                    }
+                }
+            });
+        }
+    }
+}
+
+function handleDelete() {
+    const deleteBtns: NodeListOf<HTMLButtonElement> =
+        document.querySelectorAll(".delete-button");
+
+    for (let i = 0; i < deleteBtns.length; i++) {
+        const btn = deleteBtns[i];
+        btn.addEventListener("click", async () => {
+            const id = btn.parentElement?.parentElement?.id;
+            if (id) {
+                try {
+                    const success = await Product.delete(id);
+                    if (success) {
+                        document.getElementById(id)?.remove();
+                    }
+                } catch (err: any) {
+                    console.error(err)
+                    datapoint.event = "nicked_ext_error";
+                    datapoint.location = "options_handle_delete";
+                    datapoint.details = err.message;
+                    datapoint.send();
+                }
+            }
+        });
+    }
+}
+
