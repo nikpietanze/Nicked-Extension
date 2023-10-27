@@ -10,7 +10,7 @@ export async function handleRefreshingSales() {
 	}
 
 	const newSales = [];
-	await user.refresh(user.email, user.id);
+	await user.refresh(user);
 	for (let i = 0; i < user.products.length; i++) {
 		const p = user.products[i];
 		if (p.active) {

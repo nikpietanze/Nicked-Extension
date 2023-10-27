@@ -4,8 +4,8 @@ import User from "./models/user";
 import type Sync from "./types/sync.d.ts";
 import State from "./models/state";
 import messageHandler from "./handlers/messageHandler";
-import { handleRefreshingSales } from "./handlers/alarmHandler";
-import { handleSalesNotifications } from "./handlers/notificationHandler";
+//import { handleRefreshingSales } from "./handlers/alarmHandler";
+//import { handleSalesNotifications } from "./handlers/notificationHandler";
 import DataPoint from "./models/analytics";
 
 export const user = new User();
@@ -39,26 +39,6 @@ export const datapoint = new DataPoint();
 
 	// TODO: Optimize notifications so they are informative but not annoying
 
-	await chrome.alarms.create("refresh_sales", {
-		delayInMinutes: 1,
-		periodInMinutes: 1440,
-	});
-	await chrome.alarms.create("sales_notifications", {
-		delayInMinutes: 5,
-		periodInMinutes: 1445,
-	});
-
+    chrome.runtime.onMessage.addListener(messageHandler);
 })();
 
-chrome.runtime.onMessage.addListener(messageHandler);
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-	switch (alarm.name) {
-		case "refresh_sales":
-			handleRefreshingSales();
-			return;
-		case "sales_notifications":
-			handleSalesNotifications();
-			return;
-	}
-});
