@@ -7,7 +7,7 @@ interface Elements {
     app: HTMLDivElement | null;
     products: HTMLDivElement | null;
     email: HTMLInputElement | null,
-    notifications: {
+    alerts: {
         email: HTMLInputElement | null,
         browser: HTMLInputElement | null,
     }
@@ -21,7 +21,7 @@ const elements: Elements = {
     app: null,
     products: null,
     email: null,
-    notifications: {
+    alerts: {
         email: null,
         browser: null,
     }
@@ -33,8 +33,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.app = document.querySelector("#app");
     elements.products = document.querySelector("#products");
     elements.email = document.querySelector("#email");
-    elements.notifications.email = document.querySelector("#email-notifications");
-    elements.notifications.browser = document.querySelector("#browser-notifications");
+    elements.alerts.email = document.querySelector("#email-alerts");
+    elements.alerts.browser = document.querySelector("#browser-alerts");
 
     setTimeout(async () => {
         if (user.email && elements.email) {
@@ -43,20 +43,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             elements.email.classList.add("pointer-events-none", "text-stone-400");
         }
 
-        if (elements.notifications.email) {
-            elements.notifications.email.checked = user.emailNotifications;
+        if (elements.alerts.email) {
+            elements.alerts.email.checked = user.emailAlerts;
 
-            elements.notifications.email.addEventListener("click", () => {
-                user.emailNotifications = !user.emailNotifications;
-                chrome.storage.sync.set({ user: user });
+            elements.alerts.email.addEventListener("click", async () => {
+                user.emailAlerts = !user.emailAlerts;
+                await user.updateUser();
             })
         }
 
-        if (elements.notifications.browser) {
-            elements.notifications.browser.checked = user.browserNotifications;
+        if (elements.alerts.browser) {
+            elements.alerts.browser.checked = user.browserAlerts;
 
-            elements.notifications.browser.addEventListener("click", () => {
-                user.browserNotifications = !user.browserNotifications;
+            elements.alerts.browser.addEventListener("click", () => {
+                user.browserAlerts = !user.browserAlerts;
                 chrome.storage.sync.set({ user: user });
             })
         }
@@ -93,6 +93,8 @@ async function parseProducts() {
 
         productTr.id = product.id?.toString() ?? "";
 
+        console.log(product.active);
+
         productTr.innerHTML = `
                         <th class="flex items-center gap-3 px-6 py-4 font-normal text-gray-900">
                             <div class="relative h-10 w-10">
@@ -102,7 +104,7 @@ async function parseProducts() {
                             <div class="font-medium text-gray-700 max-w-xs truncate" x-tooltip="${product.name
             }">${product.name}</div>
                         </th>
-                        <td class="px-6 py-4 text-center">${product.store}</td>
+                        <td class="px-6 py-4 text-center">${product.store.charAt(0).toUpperCase() + product.store.slice(1)}</td>
                         <td class="state px-6 py-4">
                             <span
                                 class="w-full max-w-fit m-auto flex justify-center items-center gap-1 rounded-full ${product.active
@@ -117,8 +119,7 @@ async function parseProducts() {
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <input type="checkbox" class="active-checkbox bg-indigo-50 border-gray-300 cursor-pointer focus:ring-3 focus:ring-indigo-300 h-4 w-4 rounded" checked="${product.active
-            }">
+                            <input type="checkbox" class="active-checkbox bg-indigo-50 border-gray-300 cursor-pointer focus:ring-3 focus:ring-indigo-300 h-4 w-4 rounded" ${product.active ? "checked" : null}>
                         </td>
                         <td class="px-6 py-4">
                             <a class="inline-flex items-center gap-1 rounded-full transition bg-blue-50 hover:bg-blue-200 px-4 py-2 text-md font-semibold text-blue-600" href="${product.url

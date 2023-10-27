@@ -3,13 +3,14 @@
 import { datapoint } from "../background";
 import Product from "./product";
 import Price from "./price";
+import Sync from "../types/sync";
 
 export default class User {
 	id?: number;
 	email: string;
 	products: Product[] = [];
-    emailNotifications: boolean = true;
-    browserNotifications: boolean = true;
+    emailAlerts: boolean = true;
+    browserAlerts: boolean = true;
 
 	constructor(email?: string) {
 		this.email = email?.toLowerCase() ?? "";
@@ -17,6 +18,41 @@ export default class User {
 
 	validateEmail(email: string): boolean {
 		return email.includes("@") && email.includes(".");
+	}
+
+	/**
+	 * Refrehes the user data from sync storage
+	 *
+	 * @returns The current user instance if successful
+	 */
+	async refreshFromSync(): Promise<User | null> {
+        try {
+            const sync: Sync = await chrome.storage.sync.get("user") as Sync;
+            if (sync && sync.user) {
+                if (sync.user.id) {
+                    this.id = sync.user.id;
+                }
+                if (sync.user.email) {
+                    this.email = sync.user.email;
+                }
+                if (sync.user.products) {
+                    this.products = sync.user.products;
+                }
+                if (sync.user.emailAlerts) {
+                    this.emailAlerts = sync.user.emailAlerts;
+                }
+                if (sync.user.browserAlerts) {
+                    this.browserAlerts = sync.user.browserAlerts;
+                }
+            }
+        } catch(err: any) {
+            console.error(err);
+			datapoint.event = "nicked_ext_error";
+			datapoint.location = "user_refresh_from_sync";
+			datapoint.details = err.message;
+			datapoint.send();
+        }
+		return null;
 	}
 
 	/**
@@ -53,8 +89,8 @@ export default class User {
 					if (data) {
 						this.id = data.Id;
 						this.email = data.Email;
-                        this.emailNotifications = user.emailNotifications;
-                        this.browserNotifications = user.browserNotifications;
+                        this.emailAlerts = user.emailAlerts;
+                        this.browserAlerts = user.browserAlerts;
 
 						if (data.Products && data.Products.length) {
 							data.Products.forEach((product: any) => {
@@ -107,8 +143,8 @@ export default class User {
 					if (data) {
 						this.id = data.Id;
 						this.email = data.Email;
-                        this.emailNotifications = user.emailNotifications;
-                        this.browserNotifications = user.browserNotifications;
+                        this.emailAlerts = user.emailAlerts;
+                        this.browserAlerts = user.browserAlerts;
 
 						if (data.Products && data.Products.length) {
 							data.Products.forEach((product: any) => {
@@ -158,12 +194,9 @@ export default class User {
 	 * @param email - The user's email address (required)
 	 * @returns A boolean based on the success of the update
 	 */
-	async updateEmail(email: string): Promise<boolean> {
+	async updateUser(): Promise<boolean> {
 		try {
-			this.email = email;
-			chrome.storage.sync.set({ user: this });
-
-			const res = await fetch("http://localhost:8080/api/user", {
+			const res = await fetch(`http://localhost:8080/api/user/${this.id}`, {
 				method: "PUT",
 				headers: {
 					Authorization:
@@ -171,9 +204,14 @@ export default class User {
 						btoa(process.env.USERNAME + ":" + process.env.PASSWORD),
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ email }),
+				body: JSON.stringify({
+                    id: this.id,
+                    email: this.email,
+                    emailAlerts: this.emailAlerts,
+                }),
 			});
 			if (res.ok) {
+			    chrome.storage.sync.set({ user: this });
 				return true;
 			}
 		} catch (err: any) {

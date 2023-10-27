@@ -29,7 +29,12 @@
 		"128": "icons/icon_128.png"
 	},
 	"options_page": "options.html",
-	"permissions": ["storage", "tabs", "alarms", "notifications"],
+	"permissions": [
+        "alarms",
+        "storage",
+        "tabs",
+        "notifications"
+    ],
 	"web_accessible_resources": [
 		{
 			"resources": [

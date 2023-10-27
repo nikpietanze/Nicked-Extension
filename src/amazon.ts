@@ -27,7 +27,11 @@ const btnImageStyles = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-	console.log(user);
+    try {
+        await user.refreshFromSync();
+    } catch (err) {
+        console.error(err);
+    }
 
 	if (product.url?.pathname.includes("/dp/")) {
 		const pathParts = product.url.pathname.split("/");
