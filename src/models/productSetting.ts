@@ -17,6 +17,7 @@ export default class ProductSetting {
             for (let i = 0; i < user.productSettings.length; i++) {
                 const setting = user.productSettings[i];
                 if (setting.productId == productId) {
+                    console.log("product setting found", setting.active)
                     return setting.active;
                 }
             }

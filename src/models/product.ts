@@ -100,6 +100,7 @@ export default class Product {
                     product.sku?.toLowerCase() === this.sku?.toLowerCase() &&
                     product.store.toLowerCase() === this.store.toLowerCase()
                 ) {
+                    console.log("product found", product)
                     tracking = ProductSetting.isActive(product.id);
                 }
             });
