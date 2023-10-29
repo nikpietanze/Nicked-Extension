@@ -2,6 +2,7 @@
 
 import { user, datapoint } from "../background";
 import Price from "./price";
+import ProductSetting from "./productSetting";
 
 export default class Product {
     id?: number;
@@ -50,6 +51,7 @@ export default class Product {
                     sku: this.sku,
                     store: this.store,
                     url: this.url?.href,
+                    userId: user.id,
                 }),
             });
             if (res.ok) {
@@ -98,7 +100,7 @@ export default class Product {
                     product.sku?.toLowerCase() === this.sku?.toLowerCase() &&
                     product.store.toLowerCase() === this.store.toLowerCase()
                 ) {
-                    tracking = product.active;
+                    tracking = ProductSetting.isActive(product.id);
                 }
             });
         }
