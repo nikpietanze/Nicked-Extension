@@ -26,7 +26,7 @@ const btnImageStyles = {
 	height: "25px",
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
+(async () => {
     try {
         await user.refreshFromSync();
     } catch (err) {
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		product.sku = pathParts[pathParts.indexOf("dp") + 1];
 
 		try {
-			state.tracking = await product.isBeingTracked();
+			state.tracking = product.isBeingTracked();
 		} catch (err: any) {
 			console.error(err);
 			datapoint.event = "nicked_ext_error";
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 		watchForBuyButton(priceTrackBtn);
 	}
-});
+})()
 
 function createBtn(): HTMLButtonElement {
 	const btn = document.createElement("button");
