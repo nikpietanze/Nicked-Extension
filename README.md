@@ -1,5 +1,5 @@
 <div id="header" align="center">
-  <img src="public/img/logo.png" width="100"/>
+  <img src="public/images/logo.png" width="100"/>
   <h1>Nicked Browser Extension</h1>
 </div>
 
