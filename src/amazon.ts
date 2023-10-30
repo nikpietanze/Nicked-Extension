@@ -26,6 +26,7 @@ const state = {
 };
 
 const elements = {
+    buyBtn: document.createElement("button"),
     btn: document.createElement("button"),
     img: document.createElement("img"),
     loader: document.createElement("div"),
@@ -76,32 +77,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 function initBtn(): HTMLButtonElement {
     Object.assign(elements.btn.style, btnStyles);
     Object.assign(elements.loader.style, loaderStyles);
-    elements.btn.classList.add("nicked-amazon-track-btn");
+    elements.btn.classList.add("nicked-amazon-track-btn", "a-button-text");
     elements.img.src = chrome.runtime.getURL("/images/logo_icon.png");
     Object.assign(elements.img.style, btnImgStyles);
     elements.btn.appendChild(elements.img);
 
     elements.loader.classList.add("loader")
-    for (let i = 0; i < elements.dots.length; i++) {
-        const dot = elements.dots[i];
-        dot.classList.add("loader--dot");
-        Object.assign(dot.style, loaderDotStyles);
-        dot.style.backgroundColor = loaderDotBgs[i];
-        dot.animate([
-            { transform: "translateX(0)", offset: 0.15 },
-            { transform: "translateX(195px)", offset: 0.45 },
-            { transform: "translateX(195px)", offset: 0.65 },
-            { transform: "translateX(0)", offset: 0.95 },
-        ], {
-            delay: loaderDotDelays[i],
-            easing: "ease-in-out",
-            duration: 3000,
-            iterations: Infinity,
-        })
-        elements.loader.appendChild(dot);
-    }
-
-    setBtnLoading();
 
     return elements.btn;
 }
@@ -109,6 +90,26 @@ function initBtn(): HTMLButtonElement {
 function setBtnLoading() {
     state.loading = true;
     elements.btn.innerHTML = '';
+    if (!elements.loader.childNodes.length) {
+        for (let i = 0; i < elements.dots.length; i++) {
+            const dot = elements.dots[i];
+            dot.classList.add("loader--dot");
+            Object.assign(dot.style, loaderDotStyles);
+            dot.style.backgroundColor = loaderDotBgs[i];
+            dot.animate([
+                { transform: "translateX(0)", offset: 0.15 },
+                { transform: `translateX(${(elements.buyBtn.offsetWidth - 34) ?? 198}px)`, offset: 0.45 },
+                { transform: `translateX(${(elements.buyBtn.offsetWidth -34) ?? 198}px)`, offset: 0.65 },
+                { transform: "translateX(0)", offset: 0.95 },
+            ], {
+                delay: loaderDotDelays[i],
+                easing: "ease-in-out",
+                duration: 3000,
+                iterations: Infinity,
+            })
+            elements.loader.appendChild(dot);
+        }
+    }
     elements.btn.appendChild(elements.loader);
 }
 
@@ -131,9 +132,10 @@ export function setBtnError() {
 }
 
 function watchForBuyBtn() {
-    const buyNowBtn = document.querySelector("#buyNow_feature_div");
-    if (buyNowBtn) {
-        buyNowBtn.appendChild(elements.btn);
+    elements.buyBtn = document.querySelector("#buyNow_feature_div") as HTMLButtonElement;
+    if (elements.buyBtn) {
+        setBtnLoading();
+        elements.buyBtn.appendChild(elements.btn);
 
         elements.btn.addEventListener("click", async (e) => {
             e.preventDefault();
@@ -146,7 +148,7 @@ function watchForBuyBtn() {
                 if (product.isReady()) {
                     try {
                         if (!user.email) {
-                            emailModal(product, elements.btn);
+                            emailModal(product);
                         } else {
                             const success = await product.submitCreate(
                                 user.email,

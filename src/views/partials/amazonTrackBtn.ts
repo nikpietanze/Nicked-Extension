@@ -4,7 +4,7 @@ export const btnStyles = {
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    height: "31px",
+    height: "34px",
     padding: "8px",
     marginTop: "-5px",
     marginBottom: "10px",
@@ -23,7 +23,7 @@ export const btnStyles = {
 
 export const loaderStyles = {
     height: "20px",
-    width: "250px",
+    width: "calc(100% - 16px)",
     position: "absolute",
     top: "4px",
     bottom: "0",
@@ -52,7 +52,7 @@ export const loaderDotBgs = ["#01f997", "#14e8ab", "#1fdeb7", "#34cccc", "#47bbe
 export const btnImgStyles = {
     position: "absolute",
     top: "52%",
-    left: "5px",
+    left: "6px",
     transform: "translateY(-50%)",
     width: "20px",
     height: "20px",

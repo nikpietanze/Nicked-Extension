@@ -3,12 +3,12 @@
 import { datapoint, user } from "../../background";
 import Product from "../../models/product";
 import {
-	setTrackBtnReady,
-	setTrackBtnSuccess,
-	setTrackBtnError,
+	setBtnReady,
+    setBtnTracking,
+	setBtnError,
 } from "../../amazon";
 
-export default function (product: Product, saleTrackBtn: HTMLButtonElement) {
+export default function (product: Product) {
 	const modal = document.createElement("div");
 	Object.assign(modal.style, {
 		position: "fixed",
@@ -53,7 +53,7 @@ export default function (product: Product, saleTrackBtn: HTMLButtonElement) {
 	if (closeBtn) {
 		closeBtn.addEventListener("click", () => {
 			modal.remove();
-			setTrackBtnReady(saleTrackBtn);
+			setBtnReady();
 		});
 	}
 
@@ -80,12 +80,12 @@ export default function (product: Product, saleTrackBtn: HTMLButtonElement) {
 						if (!tracking) {
 							const success = await product.submitCreate(email);
 							if (success) {
-								setTrackBtnSuccess(saleTrackBtn);
+								setBtnTracking();
 							} else {
-								setTrackBtnError(saleTrackBtn);
+								setBtnError();
 							}
 						} else {
-							setTrackBtnSuccess(saleTrackBtn);
+							setBtnTracking();
 						}
 					} catch (err: any) {
 						console.error(err);
