@@ -4,7 +4,7 @@ import { datapoint } from "../background";
 import Price from "./price";
 import Product from "./product";
 import ProductSetting from "./productSetting";
-import Sync from "../types/sync";
+import { Local, Sync } from "../types/storage";
 
 export default class User {
     id?: number;
@@ -25,11 +25,11 @@ export default class User {
     /**
      * Refrehes the user data from sync storage
      *
-     * @returns The current user instance if successful
+     * @returns a bool if updating the user instance was successful
      */
-    async refreshFromSync(): Promise<User | null> {
+    async refreshFromSync(): Promise<boolean> {
         try {
-            const sync: Sync = await chrome.storage.sync.get("user") as Sync;
+            const sync: Sync = await chrome.storage.sync.get() as Sync;
             if (sync && sync.user) {
                 if (sync.user.id) {
                     this.id = sync.user.id;
@@ -37,15 +37,7 @@ export default class User {
                 if (sync.user.email) {
                     this.email = sync.user.email;
                 }
-                if (sync.user.products) {
-                    this.products = sync.user.products;
-                }
-                if (sync.user.emailAlerts) {
-                    this.emailAlerts = sync.user.emailAlerts;
-                }
-                if (sync.user.browserAlerts) {
-                    this.browserAlerts = sync.user.browserAlerts;
-                }
+                return true;
             }
         } catch (err: any) {
             console.error(err);
@@ -54,47 +46,91 @@ export default class User {
             datapoint.details = err.message;
             datapoint.send();
         }
-        return null;
+        return false;
     }
 
     /**
-     * Refrehes the user data and saves in sync storage
+     * Refrehes the user data from local storage
+     *
+     * @returns a bool if updating the user instance was successful
+     */
+    async refreshFromLocal(): Promise<boolean> {
+        try {
+            const local: Local = await chrome.storage.local.get() as Local;
+            if (local && local.user) {
+                if (local.user.id) {
+                    this.id = local.user.id;
+                }
+                if (local.user.email) {
+                    this.email = local.user.email;
+                }
+                if (local.user.products) {
+                    this.products = local.user.products;
+                }
+                if (local.user.emailAlerts) {
+                    this.emailAlerts = local.user.emailAlerts;
+                }
+                if (local.user.browserAlerts) {
+                    this.browserAlerts = local.user.browserAlerts;
+                }
+                return true;
+            }
+        } catch (err: any) {
+            console.error(err);
+            datapoint.event = "nicked_ext_error";
+            datapoint.location = "user_refresh_from_local";
+            datapoint.details = err.message;
+            datapoint.send();
+        }
+        return false;
+    }
+
+    /**
+     * Refrehes the user data and saves in storage
      *
      * @param email - The user's email address (required)
      * @param id - The user's id (optional)
      * @returns The current user instance if successful
      */
-    async refresh(user: User): Promise<User | null> {
-        if (!user.id && !user.email) {
-            return null;
+    async refreshFromServer(): Promise<boolean> {
+        if (!this.id && !this.email) {
+            return false;
         }
 
         try {
-            if (user.id) {
-                const res = await fetch(
-                    "http://localhost:8080/api/user/" + user.id,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization:
-                                "basic " +
-                                btoa(
-                                    process.env.USERNAME +
-                                    ":" +
-                                    process.env.PASSWORD,
-                                ),
-                        },
-                    },
-                );
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data) {
-                        this.id = data.Id;
-                        this.email = data.Email;
-                        this.emailAlerts = user.emailAlerts;
+            const url = "http://localhost:8080/api/user" +
+                (this.id ? `/${this.id}` : `?email=${this.email}`);
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    Authorization:
+                        "basic " +
+                        btoa(
+                            process.env.USERNAME +
+                            ":" +
+                            process.env.PASSWORD,
+                        ),
+                },
+            },
+            );
+            if (res.ok) {
+                const data = await res.json();
+                if (data) {
+                    this.id = data.Id;
+                    this.email = data.Email;
+                    this.emailAlerts = data.EmailAlerts;
 
-                        if (data.Products && data.Products.length) {
-                            data.Products.forEach((product: any) => {
+                    if (data.Products && data.Products.length) {
+                        data.Products.forEach((product: any) => {
+                            let exists = false;
+                            for (let i = 0; i < this.products.length; i++) {
+                                const p = this.products[i];
+                                if (p.id === product.Id) {
+                                    exists = true;
+                                }
+                            }
+
+                            if (!exists) {
                                 const p = new Product();
                                 p.id = product.Id;
                                 p.imageUrl = product.ImageUrl;
@@ -115,86 +151,28 @@ export default class User {
                                 }
 
                                 this.products.push(p);
-                            });
-                        }
-
-                        if (data.ProductSettings && data.ProductSettings.length) {
-                            data.ProductSettings.forEach((setting: any) => {
-                                const s = new ProductSetting();
-                                s.id = setting.Id;
-                                s.active = setting.Active;
-                                s.productId = setting.ProductId;
-                                this.productSettings.push(s);
-                            })
-                        }
-
-                        await chrome.storage.sync.set({ user: this });
-                        return this;
+                            }
+                        });
                     }
-                }
-            } else {
-                const res = await fetch(
-                    "http://localhost:8080/api/user?email=" + user.email,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization:
-                                "basic " +
-                                btoa(
-                                    process.env.USERNAME +
-                                    ":" +
-                                    process.env.PASSWORD,
-                                ),
-                        },
-                    },
-                );
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data) {
-                        this.id = data.Id;
-                        this.email = data.Email;
-                        this.emailAlerts = user.emailAlerts;
-                        this.browserAlerts = user.browserAlerts;
 
-                        if (data.Products && data.Products.length) {
-                            data.Products.forEach((product: any) => {
-                                const p = new Product();
-                                p.id = product.Id;
-                                p.active = product.Active;
-                                p.imageUrl = product.ImageUrl;
-                                p.onSale = product.OnSale;
-                                p.name = product.Name;
-                                p.store = product.Store;
-                                p.sku = product.Sku;
-                                p.url = product.Url;
-
-                                if (product.Prices && product.Prices.length) {
-                                    product.Prices.forEach((price: any) => {
-                                        const pr = new Price();
-                                        pr.id = price.Id;
-                                        pr.amount = price.Amount;
-                                        pr.currency = price.Currency;
-                                        p.prices.push(pr);
-                                    });
-                                }
-
-                                this.products.push(p);
-                            });
-                        }
-
-                        if (data.ProductSettings && data.ProductSettings.length) {
-                            data.ProductSettings.forEach((setting: any) => {
-                                const s = new ProductSetting();
-                                s.id = setting.Id;
-                                s.active = setting.Active;
-                                s.productId = setting.ProductId;
-                                this.productSettings.push(s);
-                            })
-                        }
-
-                        await chrome.storage.sync.set({ user: this });
-                        return this;
+                    if (data.ProductSettings && data.ProductSettings.length) {
+                        data.ProductSettings.forEach((setting: any) => {
+                            const s = new ProductSetting();
+                            s.id = setting.Id;
+                            s.active = setting.Active;
+                            s.productId = setting.ProductId;
+                            this.productSettings.push(s);
+                        })
                     }
+
+                    await chrome.storage.sync.set({
+                        user: {
+                            id: this.id,
+                            email: this.email,
+                        }
+                    })
+                    await chrome.storage.local.set({ user: this });
+                    return true;
                 }
             }
         } catch (err: any) {
@@ -204,12 +182,12 @@ export default class User {
             datapoint.details = err.message;
             datapoint.send();
         }
-        return null;
+        return false;
     }
 
     /**
      * Sends a request to the server to update the user's email address
-     * and saves in sync storage
+     * and saves in storage
      *
      * @param email - The user's email address (required)
      * @returns A boolean based on the success of the update
@@ -231,7 +209,13 @@ export default class User {
                 }),
             });
             if (res.ok) {
-                chrome.storage.sync.set({ user: this });
+                chrome.storage.sync.set({
+                    user: {
+                        id: this.id,
+                        email: this.email,
+                    }
+                })
+                chrome.storage.local.set({ user: this });
                 return true;
             }
         } catch (err: any) {
@@ -246,7 +230,7 @@ export default class User {
 
     /**
      * Sends a request to the server to create the user's account
-     * and saves in sync storage
+     * and saves in storage
      *
      * @returns The current user instance if successful
      */
@@ -268,28 +252,45 @@ export default class User {
                 this.email = data.Email;
                 if (data.Products && data.Products.length) {
                     data.Products.forEach((product: any) => {
-                        const p = new Product();
-                        p.id = product.Id;
-                        p.active = product.Active;
-                        p.imageUrl = product.ImageUrl;
-                        p.onSale = product.OnSale;
-                        p.name = product.Name;
-                        p.store = product.Store;
-                        p.sku = product.Sku;
-                        p.url = product.Url;
-                        if (product.Prices && product.Prices.length) {
-                            product.Prices.forEach((price: any) => {
-                                const pr = new Price();
-                                pr.id = price.Id;
-                                pr.amount = price.Amount;
-                                pr.currency = price.Currency;
-                                p.prices.push(pr);
-                            });
+                        let exists = false;
+                        for (let i = 0; i < this.products.length; i++) {
+                            const p = this.products[i];
+                            if (p.id === product.Id) {
+                                exists = true;
+                            }
                         }
-                        this.products.push(p);
+
+                        if (!exists) {
+                            const p = new Product();
+                            p.id = product.Id;
+                            p.active = product.Active;
+                            p.imageUrl = product.ImageUrl;
+                            p.onSale = product.OnSale;
+                            p.name = product.Name;
+                            p.store = product.Store;
+                            p.sku = product.Sku;
+                            p.url = product.Url;
+
+                            if (product.Prices && product.Prices.length) {
+                                product.Prices.forEach((price: any) => {
+                                    const pr = new Price();
+                                    pr.id = price.Id;
+                                    pr.amount = price.Amount;
+                                    pr.currency = price.Currency;
+                                    p.prices.push(pr);
+                                });
+                            }
+                            this.products.push(p);
+                        }
                     });
                 }
-                await chrome.storage.sync.set({ user: this });
+                chrome.storage.sync.set({
+                    user: {
+                        id: this.id,
+                        email: this.email,
+                    }
+                })
+                await chrome.storage.local.set({ user: this });
                 return this;
             }
         } catch (err: any) {

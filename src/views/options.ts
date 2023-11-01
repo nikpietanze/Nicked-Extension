@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             elements.alerts.browser.addEventListener("click", () => {
                 user.browserAlerts = !user.browserAlerts;
-                chrome.storage.sync.set({ user: user });
+                chrome.storage.local.set({ user: user });
             })
         }
 
